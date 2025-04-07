@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FreshCart AI - Grocery Assistant</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        :root {
+            --primary-color: #4CAF50;
+            --secondary-color: #388E3C;
+            --light-color: #F1F8E9;
+            --dark-color: #2E7D32;
+            --text-color: #333;
+            --white: #FFFFFF;
+            --gray: #E0E0E0;
+            --dark-gray: #757575;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f5f5;
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .chatbot-container {
+            width: 900px;
+            height: 700px;
+            margin: 0 auto;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            background-color: var(--white);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chatbot-header {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 20px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .chatbot-header h2 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        .chatbot-header .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .chatbot-header .logo i {
+            font-size: 2rem;
+        }
+
+        .chatbot-messages {
+            flex: 1;
+            padding: 25px 30px;
+            overflow-y: auto;
+            background-color: var(--light-color);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .message {
+            max-width: 75%;
+            padding: 15px 20px;
+            border-radius: 20px;
+            line-height: 1.5;
+            font-size: 1.1rem;
+            position: relative;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .bot-message {
+            background-color: var(--white);
+            color: var(--text-color);
+            border-bottom-left-radius: 5px;
+            align-self: flex-start;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .user-message {
+            background-color: var(--primary-color);
+            color: white;
+            border-bottom-right-radius: 5px;
+            align-self: flex-end;
+        }
+
+        .chatbot-input {
+            display: flex;
+            padding: 20px 30px;
+            background-color: var(--white);
+            border-top: 1px solid var(--gray);
+        }
+
+        .chatbot-input input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 1px solid var(--gray);
+            border-radius: 30px;
+            outline: none;
+            font-size: 1.1rem;
+            transition: border 0.3s;
+        }
+
+        .chatbot-input input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .chatbot-input button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            margin-left: 15px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            font-size: 1.2rem;
+        }
+
+        .chatbot-input button:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .typing-indicator {
+            display: flex;
+            padding: 15px 20px;
+            background-color: var(--white);
+            border-radius: 20px;
+            align-self: flex-start;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .typing-dot {
+            width: 10px;
+            height: 10px;
+            background-color: var(--dark-gray);
+            border-radius: 50%;
+            margin: 0 3px;
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes typingAnimation {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-5px); }
+        }
+
+        .product-card {
+            background-color: white;
+            border-radius: 12px;
+            padding: 15px;
+            margin-top: 15px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .product-image {
+            width: 80px;
+            height: 80px;
+            border-radius: 10px;
+            object-fit: cover;
+            background-color: var(--gray);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--dark-gray);
+            font-size: 2rem;
+        }
+
+        .product-info {
+            flex: 1;
+        }
+
+        .product-name {
+            font-weight: 600;
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+        }
+
+        .product-price {
+            color: var(--primary-color);
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 8px;
+        }
+
+        .product-original-price {
+            text-decoration: line-through;
+            color: var(--dark-gray);
+            font-size: 1rem;
+            margin-left: 8px;
+        }
+
+        .product-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 10px;
+        }
+
+        .action-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .action-btn:hover {
+            background-color: var(--secondary-color);
+        }
+
+        .action-btn.secondary {
+            background-color: var(--gray);
+            color: var(--text-color);
+        }
+
+        .action-btn.secondary:hover {
+            background-color: #d0d0d0;
+        }
+
+        .welcome-message {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .status-indicator {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 1rem;
+        }
+
+        .status-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #4CAF50;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        @media (max-width: 1000px) {
+            .chatbot-container {
+                width: 100%;
+                height: 90vh;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .chatbot-container {
+                height: 100vh;
+                border-radius: 0;
+            }
+            
+            .chatbot-header {
+                padding: 15px 20px;
+            }
+            
+            .chatbot-messages {
+                padding: 15px 20px;
+            }
+            
+            .message {
+                max-width: 85%;
+                font-size: 1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="chatbot-container">
+        <div class="chatbot-header">
+            <div class="logo">
+                <i class="fas fa-shopping-basket"></i>
+                <h2>FreshCart AI</h2>
+            </div>
+            <div class="status-indicator">
+                <div class="status-dot"></div>
+                <span id="connection-status">Online</span>
+            </div>
+        </div>
+
+        <div class="chatbot-messages" id="chat-messages">
+            <div class="message bot-message">
+                <div class="welcome-message">Hi there! 👋 I'm your FreshCart AI assistant.</div>
+                How can I help you with your grocery needs today?
+            </div>
+            
+        </div>
+
+        <div class="chatbot-input">
+            <input type="text" id="user-input" placeholder="Ask me about recipes, prices, or shopping lists..." autocomplete="off">
+            <button id="send-button"><i class="fas fa-paper-plane"></i></button>
+            <button id="clear-list-btn" style="background-color: #f44336; color: white; border: none; width: 55px; height: 55px; border-radius: 50%; margin-left: 10px; cursor: pointer; transition: background-color 0.3s; font-size: 1.2rem;">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const chatMessages = document.getElementById('chat-messages');
+            const userInput = document.getElementById('user-input');
+            const sendButton = document.getElementById('send-button');
+
+            // Add this inside your DOMContentLoaded event listener
+document.addEventListener('click', function(e) {
+    if (e.target.classList.contains('add-to-cart')) {
+        const itemData = JSON.parse(e.target.dataset.item);
+        addToCart(itemData);
+    }
+    
+    if (e.target.id === 'clear-list-btn') {
+        clearGroceryList();
+    }
+});
+
+async function addToCart(item) {
+    try {
+        const response = await fetch('http://localhost:5000/api/add-to-cart', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                item: item.name,
+                amount: item.amount,
+                unit: item.unit
+            })
+        });
+        
+        const result = await response.json();
+        if (result.status === "success") {
+            // Show success message
+            const successMsg = document.createElement('div');
+            successMsg.classList.add('message', 'bot-message');
+            successMsg.textContent = `Added ${item.amount} ${item.unit} of ${item.name} to your cart!`;
+            chatMessages.appendChild(successMsg);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+    } catch (error) {
+        console.error('Error adding to cart:', error);
+    }
+}
+    
+            // Function to add a message to the chat
+            function addMessage(text, isUser) {
+                const messageDiv = document.createElement('div');
+                messageDiv.classList.add('message');
+                messageDiv.classList.add(isUser ? 'user-message' : 'bot-message');
+                
+                // Replace newlines with <br> for HTML display
+                const formattedText = text.replace(/\n/g, '<br>');
+                messageDiv.innerHTML = formattedText;
+                
+                chatMessages.appendChild(messageDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            }
+    
+            // Function to show typing indicator
+            function showTyping() {
+                const typingDiv = document.createElement('div');
+                typingDiv.classList.add('typing-indicator');
+                typingDiv.innerHTML = `
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                `;
+                chatMessages.appendChild(typingDiv);
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+                return typingDiv;
+            }
+    
+            // Function to create a product card
+            function createProductCard(product) {
+    const productDiv = document.createElement('div');
+    productDiv.classList.add('product-card');
+    
+    // Handle image with fallback
+    let imageContent;
+    if (product.image) {
+        imageContent = `<img src="${product.image}" alt="${product.name}" 
+                       onerror="this.onerror=null;this.parentElement.innerHTML='<i class=\\'fas fa-carrot\\'></i>'"
+                       style="width:80px;height:80px;object-fit:cover;border-radius:10px;">`;
+    } else {
+        // Use an appropriate icon based on product name
+        const icon = getProductIcon(product.name.toLowerCase());
+        imageContent = `<i class="fas fa-${icon}" style="font-size:2rem;"></i>`;
+    }
+    
+    productDiv.innerHTML = `
+        <div class="product-image">
+            ${imageContent}
+        </div>
+        <div class="product-info">
+            <div class="product-name">${product.name}</div>
+            <div class="product-amount">${product.amount.toFixed(2)} ${product.unit}</div>
+        </div>
+    `;
+    return productDiv;
+}
+
+function createRecipeCard(recipeTitle, recipeImage, ingredients) {
+    const recipeDiv = document.createElement('div');
+    recipeDiv.classList.add('message', 'bot-message');
+    
+    let recipeContent = `<div class="recipe-header" style="display:flex;gap:15px;margin-bottom:15px;">
+                            <h3 style="margin:0;">${recipeTitle}</h3>
+                         </div>`;
+    
+    if (recipeImage) {
+        recipeContent = `<div class="recipe-header" style="display:flex;gap:15px;margin-bottom:15px;">
+                            <img src="${recipeImage}" alt="${recipeTitle}" style="width:100px;height:100px;border-radius:10px;object-fit:cover;">
+                            <h3 style="margin:0;">${recipeTitle}</h3>
+                         </div>`;
+    }
+    
+    recipeContent += `<p><strong>Ingredients:</strong></p>
+                     <div class="ingredients-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;">`;
+    
+    ingredients.forEach(ing => {
+        recipeContent += `<div class="ingredient-item" style="display:flex;align-items:center;gap:8px;">
+                            ${ing.image ? `<img src="${ing.image}" alt="${ing.name}" style="width:40px;height:40px;border-radius:5px;">` : 
+                             `<i class="fas fa-${getProductIcon(ing.name.toLowerCase())}" style="font-size:1.2rem;"></i>`}
+                            <span>${ing.amount.toFixed(2)} ${ing.unit}<br>${ing.name}</span>
+                          </div>`;
+    });
+    
+    recipeContent += `</div>`;
+    recipeDiv.innerHTML = recipeContent;
+    return recipeDiv;
+}
+    
+            // Helper function to get appropriate icons for products
+            function getProductIcon(productName) {
+    const iconMap = {
+        'apple': 'apple-alt',
+        'banana': 'banana',
+        'bread': 'bread-slice',
+        'egg': 'egg',
+        'milk': 'wine-bottle',
+        'flour': 'wheat-awn',
+        'meat': 'drumstick',
+        'fish': 'fish',
+        'vegetable': 'carrot',
+        'rice': 'bowl-food'
+    };
+    
+    for (const [key, icon] of Object.entries(iconMap)) {
+        if (productName.includes(key)) {
+            return icon;
+        }
+    }
+    return 'shopping-basket'; // default icon
+}
+    
+            // Function to send message to backend
+            async function sendToBackend(message) {
+                try {
+                    const response = await fetch('http://localhost:5000/api/chat', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ message })
+                    });
+                    return await response.json();
+                } catch (error) {
+                    console.error('Error:', error);
+                    return {
+                        text: "Sorry, I'm having trouble connecting to the server. Please try again later.",
+                        suggestions: ["Try again", "Check connection"]
+                    };
+                }
+            }
+
+            async function clearGroceryList() {
+    if (Object.keys(grocery_list).length === 0) {
+        addMessage("Your grocery list is already empty.", false);
+        return;
+    }
+    
+    if (!confirm("Are you sure you want to clear your entire grocery list?")) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('http://localhost:5000/api/clear-list', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        });
+        
+        const result = await response.json();
+        if (result.status === "success") {
+            addMessage("Your grocery list has been cleared.", false);
+        }
+    } catch (error) {
+        console.error('Error clearing list:', error);
+        addMessage("Failed to clear the grocery list. Please try again.", false);
+    }
+}
+
+    
+            // Function to handle user input
+            async function handleUserInput() {
+                const text = userInput.value.trim();
+                if (text === '') return;
+    
+                addMessage(text, true);
+                userInput.value = '';
+    
+                // Show typing indicator
+                const typingIndicator = showTyping();
+    
+                // Send to backend and get response
+                const botResponse = await sendToBackend(text);
+    typingIndicator.remove();
+
+    if (botResponse.text) {
+        addMessage(botResponse.text, false);
+    }
+    
+    if (botResponse.products && botResponse.products.length > 0) {
+        const productsDiv = document.createElement('div');
+        productsDiv.classList.add('message', 'bot-message');
+        
+        if (botResponse.productsTitle) {
+            productsDiv.innerHTML = `<h4>${botResponse.productsTitle}</h4>`;
+        }
+        
+        botResponse.products.forEach(product => {
+            productsDiv.appendChild(createProductCard(product));
+        });
+        
+        chatMessages.appendChild(productsDiv);
+    }
+            }
+    
+            // Event listeners
+            sendButton.addEventListener('click', handleUserInput);
+            
+            userInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') {
+                    handleUserInput();
+                }
+            });
+
+    
+            // Focus the input field when page loads
+            userInput.focus();
+        });
+        
+    </script>
+</body>
+</html>
